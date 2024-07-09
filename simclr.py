@@ -41,6 +41,9 @@ class SimCLR(object):
 
         loss = pos_term - neg_term
 
+        print(f"{pos_term.shape=}")
+        print(f"{neg_term.shape=}")
+
         # For compatibility with info_nce_loss, create logits and labels
         logits = torch.cat([loss.unsqueeze(0), torch.zeros(features.shape[0] - 1).to(self.args.device)], dim=0)
         labels = torch.zeros(features.shape[0], dtype=torch.long).to(self.args.device)
