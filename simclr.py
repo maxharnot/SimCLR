@@ -28,6 +28,7 @@ class SimCLR(object):
         labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
         labels = labels.to(self.args.device)
 
+
         features = F.normalize(features, dim=1)
 
         # Calculate the covariance matrix
@@ -45,14 +46,16 @@ class SimCLR(object):
         logits = torch.cat([loss.unsqueeze(0), torch.zeros(features.shape[0] - 1).to(self.args.device)], dim=0)
         labels = torch.zeros(features.shape[0], dtype=torch.long).to(self.args.device)
 
+        print(f"{features.shape=}")
         print(f"{pos_term.shape=}")
         print(f"{neg_term.shape=}")
         print(f"{pos_term=}")
         print(f"{neg_term=}")
         print(f"{logits.shape=}")
-        print(f"{logits=}")
         print(f"{labels.shape=}")
+        print(f"{logits=}")
         print(f"{labels=}")
+        print(f"{features=}")
 
         return logits, labels
 
@@ -83,6 +86,22 @@ class SimCLR(object):
 
         logits = torch.cat([positives, negatives], dim=1)
         labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
+
+        print(f"{features.shape=}")
+        print(f"{similarity_matrix.shape=}")
+        print(f"{mask.shape=}")
+        print(f"{positives.shape=}")
+        print(f"{negatives.shape=}")
+        print(f"{logits.shape=}")
+        print(f"{labels.shape=}")
+
+        print(f"{features=}")
+        print(f"{similarity_matrix=}")
+        print(f"{mask=}")
+        print(f"{positives=}")
+        print(f"{negatives=}")
+        print(f"{logits=}")
+        print(f"{labels=}")
 
         logits = logits / self.args.temperature
         return logits, labels
