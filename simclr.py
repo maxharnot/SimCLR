@@ -76,7 +76,6 @@ class SimCLR(object):
         # select only the negatives the negatives
         negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
 
-        print(f"before {logits.shape=}")
         print(f"before {labels.shape=}")
 
 
