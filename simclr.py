@@ -46,17 +46,6 @@ class SimCLR(object):
         logits = torch.cat([loss.unsqueeze(0), torch.zeros(features.shape[0] - 1).to(self.args.device)], dim=0)
         labels = torch.zeros(features.shape[0], dtype=torch.long).to(self.args.device)
 
-        print(f"{features.shape=}")
-        print(f"{pos_term.shape=}")
-        print(f"{neg_term.shape=}")
-        print(f"{pos_term=}")
-        print(f"{neg_term=}")
-        print(f"{logits.shape=}")
-        print(f"{labels.shape=}")
-        print(f"{logits=}")
-        print(f"{labels=}")
-        print(f"{features=}")
-
         return logits, labels
 
     def info_nce_loss(self, features):
@@ -109,6 +98,8 @@ class SimCLR(object):
         print(f"{negatives=}")
         print(f"{logits=}")
         print(f"{labels=}")
+
+        print('-'*100)
 
         logits = logits / self.args.temperature
         return logits, labels
