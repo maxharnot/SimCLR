@@ -41,12 +41,18 @@ class SimCLR(object):
 
         loss = pos_term - neg_term
 
-        print(f"{pos_term.shape=}")
-        print(f"{neg_term.shape=}")
-
         # For compatibility with info_nce_loss, create logits and labels
         logits = torch.cat([loss.unsqueeze(0), torch.zeros(features.shape[0] - 1).to(self.args.device)], dim=0)
         labels = torch.zeros(features.shape[0], dtype=torch.long).to(self.args.device)
+
+        print(f"{pos_term.shape=}")
+        print(f"{neg_term.shape=}")
+        print(f"{pos_term=}")
+        print(f"{neg_term=}")
+        print(f"{logits.shape=}")
+        print(f"{logits=}")
+        print(f"{labels.shape=}")
+        print(f"{labels=}")
 
         return logits, labels
 
@@ -74,9 +80,6 @@ class SimCLR(object):
 
         # select only the negatives the negatives
         negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
-
-        print(f"{positives.shape=}")
-        print(f"{negatives.shape=}")
 
         logits = torch.cat([positives, negatives], dim=1)
         labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
