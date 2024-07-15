@@ -50,7 +50,8 @@ parser.add_argument('--temperature', default=0.1, type=float,
 parser.add_argument('--n-views', default=2, type=int, metavar='N',
                     help='Number of views for contrastive learning training.')
 parser.add_argument('--gpu-index', default=0, type=int, help='Gpu index.')
-parser.add_argument('--kernel', default='cosine_similarity', help='kernel type', choices=['cosine_similarity', 'laplacian'])
+parser.add_argument('--kernel', default='cosine_similarity', help='kernel type',
+                    choices=['cosine_similarity', 'laplacian', 'exponential', 'simple'])
 
 
 def main():
