@@ -6,7 +6,7 @@ python run.py \
   --arch resnet18 \
   --seed 7 \
   --out_dim 128 \
-  --loss spectral
+  --kernel laplacian
 
 
 #positives.shape=torch.Size([512, 1])

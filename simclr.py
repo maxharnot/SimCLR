@@ -23,32 +23,8 @@ class SimCLR(object):
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
-    def spectral_loss(self, features, eps=1e-6):
-        labels = torch.cat([torch.arange(self.args.batch_size) for i in range(self.args.n_views)], dim=0)
-        labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
-        labels = labels.to(self.args.device)
 
-
-        features = F.normalize(features, dim=1)
-
-        # Calculate the covariance matrix
-        cov = torch.pow(torch.mm(features, features.t().contiguous()), 2)
-
-        # Calculate positive and negative terms
-        pos_term = torch.sum(torch.clamp(cov.sum(dim=-1) - cov.diag(), min=eps) *
-                             (1. / (features.shape[0] * (features.shape[0] - 1))))
-        neg_term = torch.sum(features[:self.args.batch_size] * features[self.args.batch_size:]) * (
-                2. / features.shape[0])
-
-        loss = pos_term - neg_term
-
-        # For compatibility with info_nce_loss, create logits and labels
-        logits = torch.cat([loss.unsqueeze(0), torch.zeros(features.shape[0] - 1).to(self.args.device)], dim=0)
-        labels = torch.zeros(features.shape[0], dtype=torch.long).to(self.args.device)
-
-        return logits, labels
-
-    def info_nce_loss(self, features):
+    def info_nce_loss(self, features, kernel):
         print(f"starting {features.shape=}")
 
         labels = torch.cat([torch.arange(self.args.batch_size) for i in range(self.args.n_views)], dim=0)
@@ -58,8 +34,15 @@ class SimCLR(object):
         print(f"starting {labels.shape=}")
 
         features = F.normalize(features, dim=1)
+        AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian']
+        assert kernel in AVAILABLE_KERNELS, f"kernel should be one of {AVAILABLE_KERNELS}, you provided '{kernel}'"
+        if kernel == "cosine_similarity":
+            similarity_matrix = torch.matmul(features, features.T)
+        elif kernel == 'laplacian':
+            similarity_matrix = torch.cdist(features, features, p=1)
 
-        similarity_matrix = torch.matmul(features, features.T)
+        print(kernel, similarity_matrix.shape)
+
         # assert similarity_matrix.shape == (
         #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
         # assert similarity_matrix.shape == labels.shape
@@ -104,11 +87,7 @@ class SimCLR(object):
         return logits, labels
 
     def loss(self, features):
-        assert self.args.loss in ['info_nce', 'spectral'], "Choice loss to be one of ['info_nce', 'spectral']"
-        if self.args.loss == 'info_nce':
-            logits, labels = self.info_nce_loss(features)
-        elif self.args.loss == 'spectral':
-            logits, labels = self.spectral_loss(features)
+        logits, labels = self.info_nce_loss(features, kernel=self.args.kernel)
         return logits, labels
 
     def train(self, train_loader):
