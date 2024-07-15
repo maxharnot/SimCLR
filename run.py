@@ -4,7 +4,7 @@ import torch.backends.cudnn as cudnn
 from torchvision import models
 from data_aug.contrastive_learning_dataset import ContrastiveLearningDataset
 from models.resnet_simclr import ResNetSimCLR
-from simclr import SimCLR
+from simclr import SimCLR, AVAILABLE_KERNELS
 
 model_names = sorted(name for name in models.__dict__
                      if name.islower() and not name.startswith("__")
@@ -40,18 +40,17 @@ parser.add_argument('--disable-cuda', action='store_true',
                     help='Disable CUDA')
 parser.add_argument('--fp16-precision', action='store_true',
                     help='Whether or not to use 16-bit precision GPU training.')
-
-parser.add_argument('--out_dim', default=128, type=int,
-                    help='feature dimension (default: 128)')
-parser.add_argument('--log-every-n-steps', default=100, type=int,
-                    help='Log every n steps')
-parser.add_argument('--temperature', default=0.1, type=float,
-                    help='softmax temperature (default: 0.1)')
+parser.add_argument('--out_dim', default=128, type=int, help='feature dimension (default: 128)')
+parser.add_argument('--log-every-n-steps', default=100, type=int, help='Log every n steps')
+parser.add_argument('--temperature', default=0.1, type=float, help='softmax temperature (default: 0.1)')
+parser.add_argument('--gamma1', default=1.0, type=float, help='gamma (default: 1.0)')
+parser.add_argument('--gamma2', default=2.0, type=float, help='gamma 2 (default: 2.0)')
+parser.add_argument('--gamma_lambda', default=0.5, type=float, help='gamma lambda (default: 0.5)')
 parser.add_argument('--n-views', default=2, type=int, metavar='N',
                     help='Number of views for contrastive learning training.')
 parser.add_argument('--gpu-index', default=0, type=int, help='Gpu index.')
 parser.add_argument('--kernel', default='cosine_similarity', help='kernel type',
-                    choices=['cosine_similarity', 'laplacian', 'exponential', 'simple'])
+                    choices=AVAILABLE_KERNELS)
 
 
 def main():

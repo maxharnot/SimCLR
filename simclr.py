@@ -11,6 +11,8 @@ from utils import save_config_file, accuracy, save_checkpoint
 
 torch.manual_seed(0)
 
+AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian', 'exponential', 'simple']
+
 
 class SimCLR(object):
 
@@ -30,27 +32,21 @@ class SimCLR(object):
         return similarity_matrix
 
     def info_nce_loss(self, features, kernel):
-        # print(f"starting {features.shape=}")
-
         labels = torch.cat([torch.arange(self.args.batch_size) for i in range(self.args.n_views)], dim=0)
         labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
         labels = labels.to(self.args.device)
 
-        # print(f"starting {labels.shape=}")
-
         features = F.normalize(features, dim=1)
-        AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian', 'exponential', 'simple']
         assert kernel in AVAILABLE_KERNELS, f"kernel should be one of {AVAILABLE_KERNELS}, you provided '{kernel}'"
         if kernel == "cosine_similarity":
             similarity_matrix = torch.matmul(features, features.T)
         elif kernel == 'laplacian':
-            similarity_matrix = self.gamma_kernel(features=features, gamma=1)
+            similarity_matrix = self.gamma_kernel(features=features, gamma=self.args.gamma1)
         elif kernel == 'exponential':
-            similarity_matrix = self.gamma_kernel(features=features, gamma=0.5)
+            similarity_matrix = self.gamma_kernel(features=features, gamma=self.args.gamma1)
         elif kernel == 'simple':
-            gamma_lambda = 0.5
-            similarity_matrix = self.gamma_kernel(features=features, gamma=1) * gamma_lambda + \
-                                self.gamma_kernel(features=features, gamma=2.0) * (1. - gamma_lambda)
+            similarity_matrix = self.gamma_kernel(features=features, gamma=self.args.gamma1) * self.args.gamma_lambda + \
+                                self.gamma_kernel(features=features, gamma=self.args.gamma2) * (1. - self.args.gamma_lambda)
 
         assert similarity_matrix.shape == (
             self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
