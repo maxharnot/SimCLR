@@ -23,6 +23,11 @@ class SimCLR(object):
         logging.basicConfig(filename=os.path.join(self.writer.log_dir, 'training.log'), level=logging.DEBUG)
         self.criterion = torch.nn.CrossEntropyLoss().to(self.args.device)
 
+    def gamma_kernel(self, features, gamma):
+        similarity_matrix = torch.cdist(features, features, p=1)
+        similarity_matrix = torch.pow(similarity_matrix, gamma) * -1
+        similarity_matrix = torch.exp(similarity_matrix / self.args.temperature)
+        return similarity_matrix
 
     def info_nce_loss(self, features, kernel):
         print(f"starting {features.shape=}")
@@ -34,18 +39,22 @@ class SimCLR(object):
         print(f"starting {labels.shape=}")
 
         features = F.normalize(features, dim=1)
-        AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian']
+        AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian', 'exponential', 'simple']
         assert kernel in AVAILABLE_KERNELS, f"kernel should be one of {AVAILABLE_KERNELS}, you provided '{kernel}'"
         if kernel == "cosine_similarity":
             similarity_matrix = torch.matmul(features, features.T)
         elif kernel == 'laplacian':
-            similarity_matrix = torch.cdist(features, features, p=1)
+            similarity_matrix = self.gamma_kernel(features=features, gamma=1)
+        elif kernel == 'exponential':
+            similarity_matrix = self.gamma_kernel(features=features, gamma=0.5)
+        elif kernel == 'simple':
+            gamma_lambda = 0.5
+            similarity_matrix = self.gamma_kernel(features=features, gamma=1) * gamma_lambda + \
+                                self.gamma_kernel(features=features, gamma=2.0) * (1. - gamma_lambda)
 
-        print(kernel, similarity_matrix.shape)
-
-        # assert similarity_matrix.shape == (
-        #     self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
-        # assert similarity_matrix.shape == labels.shape
+        assert similarity_matrix.shape == (
+            self.args.n_views * self.args.batch_size, self.args.n_views * self.args.batch_size)
+        assert similarity_matrix.shape == labels.shape
 
         # discard the main diagonal from both: labels and similarities matrix
         mask = torch.eye(labels.shape[0], dtype=torch.bool).to(self.args.device)
@@ -59,29 +68,28 @@ class SimCLR(object):
         # select only the negatives the negatives
         negatives = similarity_matrix[~labels.bool()].view(similarity_matrix.shape[0], -1)
 
-        print(f"before {labels.shape=}")
-
+        # print(f"before {labels.shape=}")
 
         logits = torch.cat([positives, negatives], dim=1)
         labels = torch.zeros(logits.shape[0], dtype=torch.long).to(self.args.device)
 
-        print(f"{features.shape=}")
-        print(f"{similarity_matrix.shape=}")
-        print(f"{mask.shape=}")
-        print(f"{positives.shape=}")
-        print(f"{negatives.shape=}")
-        print(f"{logits.shape=}")
-        print(f"{labels.shape=}")
+        # print(f"{features.shape=}")
+        # print(f"{similarity_matrix.shape=}")
+        # print(f"{mask.shape=}")
+        # print(f"{positives.shape=}")
+        # print(f"{negatives.shape=}")
+        # print(f"{logits.shape=}")
+        # print(f"{labels.shape=}")
+        #
+        # print(f"{features=}")
+        # print(f"{similarity_matrix=}")
+        # print(f"{mask=}")
+        # print(f"{positives=}")
+        # print(f"{negatives=}")
+        # print(f"{logits=}")
+        # print(f"{labels=}")
 
-        print(f"{features=}")
-        print(f"{similarity_matrix=}")
-        print(f"{mask=}")
-        print(f"{positives=}")
-        print(f"{negatives=}")
-        print(f"{logits=}")
-        print(f"{labels=}")
-
-        print('-'*100)
+        # print('-' * 100)
 
         logits = logits / self.args.temperature
         return logits, labels
