@@ -30,13 +30,13 @@ class SimCLR(object):
         return similarity_matrix
 
     def info_nce_loss(self, features, kernel):
-        print(f"starting {features.shape=}")
+        # print(f"starting {features.shape=}")
 
         labels = torch.cat([torch.arange(self.args.batch_size) for i in range(self.args.n_views)], dim=0)
         labels = (labels.unsqueeze(0) == labels.unsqueeze(1)).float()
         labels = labels.to(self.args.device)
 
-        print(f"starting {labels.shape=}")
+        # print(f"starting {labels.shape=}")
 
         features = F.normalize(features, dim=1)
         AVAILABLE_KERNELS = ['cosine_similarity', 'laplacian', 'exponential', 'simple']
